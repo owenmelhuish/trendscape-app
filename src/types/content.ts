@@ -12,12 +12,15 @@ export interface RawContent {
   hashtags: string[];
   music_id: string | null;
   music_name: string | null;
+  music_author: string | null;
   views: number;
   likes: number;
   shares: number;
   comments: number;
   thumbnail_url: string | null;
   video_url: string | null;
+  virality_score: number | null;
+  engagement_rate: number | null;
   post_created_at: string;
   scraped_at: string;
 }

@@ -8,12 +8,13 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { VelocityBadge } from "@/components/dashboard/velocity-badge";
 import { BreakoutScoreRing } from "@/components/shared/breakout-score-ring";
-import { AIStrategyCard } from "@/components/trends/ai-strategy-card";
+import { ContentBriefCard } from "@/components/trends/content-brief-card";
 import { ContentGrid } from "@/components/trends/content-grid";
 import { TrendTimeline } from "@/components/trends/trend-timeline";
 import { GlassCard } from "@/components/layout/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FORMAT_TYPE_CONFIG } from "@/lib/constants";
 import { Hash, Music, Eye, Heart, Users, Clock } from "lucide-react";
 import type { Trend } from "@/types/trend";
 import type { TrendReport } from "@/types/report";
@@ -83,6 +84,9 @@ export default function TrendDetailPage() {
   }
 
   const TypeIcon = trend.type === "music" ? Music : Hash;
+  const formatConfig = trend.format_type
+    ? FORMAT_TYPE_CONFIG[trend.format_type]
+    : null;
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -94,11 +98,34 @@ export default function TrendDetailPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">{trend.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <StatusBadge status={trend.status} />
               <VelocityBadge score={Number(trend.velocity_score)} />
+              {formatConfig && (
+                <Badge
+                  variant="outline"
+                  className="text-xs font-medium"
+                  style={{
+                    borderColor: formatConfig.color,
+                    color: formatConfig.color,
+                    backgroundColor: `${formatConfig.color}10`,
+                  }}
+                >
+                  {formatConfig.label}
+                </Badge>
+              )}
               {trend.category && <Badge variant="secondary">{trend.category}</Badge>}
             </div>
+            {trend.format_label && (
+              <p className="text-sm text-muted-foreground mt-1">{trend.format_label}</p>
+            )}
+            {trend.music_name && trend.type === "music" && (
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <Music className="w-3 h-3" />
+                {trend.music_name}
+                {trend.music_author && ` - ${trend.music_author}`}
+              </p>
+            )}
           </div>
         </div>
         <BreakoutScoreRing score={Number(trend.breakout_score)} size={72} strokeWidth={5} />
@@ -127,8 +154,8 @@ export default function TrendDetailPage() {
         <TrendTimeline contents={contents} />
       </GlassCard>
 
-      {/* AI Strategy */}
-      <AIStrategyCard
+      {/* Content Brief (replaces AI Strategy) */}
+      <ContentBriefCard
         trendId={trendId}
         brandId={activeBrand?.id || ""}
         existingReport={report}

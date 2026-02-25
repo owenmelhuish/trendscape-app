@@ -43,21 +43,33 @@ export function buildActorInput(keywords: string[]): TikTokActorInput {
 
 export async function startTikTokScrape(
   keywords: string[],
-  webhookUrl: string
+  webhookUrl?: string
 ): Promise<{ runId: string }> {
   const client = getApifyClient();
   const input = buildActorInput(keywords);
 
-  const run = await client.actor(TIKTOK_ACTOR_ID).start(input, {
-    webhooks: [
+  const options: Record<string, unknown> = {};
+  if (webhookUrl) {
+    options.webhooks = [
       {
         eventTypes: ["ACTOR.RUN.SUCCEEDED", "ACTOR.RUN.FAILED"],
         requestUrl: webhookUrl,
       },
-    ],
-  });
+    ];
+  }
+
+  const run = await client.actor(TIKTOK_ACTOR_ID).start(input, options);
 
   return { runId: run.id };
+}
+
+export async function waitForRun(
+  runId: string,
+  waitSecs: number = 55
+): Promise<{ status: string; exitCode?: number }> {
+  const client = getApifyClient();
+  const result = await client.run(runId).waitForFinish({ waitSecs });
+  return { status: result?.status ?? "UNKNOWN", exitCode: result?.exitCode };
 }
 
 export async function fetchRunResults(runId: string): Promise<TikTokActorResult[]> {
@@ -82,6 +94,7 @@ export function mapTikTokResult(
     hashtags: (result.hashtags || []).map((h) => h.name.toLowerCase()),
     music_id: result.musicMeta?.musicId || null,
     music_name: result.musicMeta?.musicName || null,
+    music_author: result.musicMeta?.musicAuthor || null,
     views: result.playCount || 0,
     likes: result.diggCount || 0,
     shares: result.shareCount || 0,

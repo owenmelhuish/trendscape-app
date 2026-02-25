@@ -2,16 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Trend, TrendStatus } from "@/types/trend";
+import type { Trend, TrendStatus, FormatType } from "@/types/trend";
+
+type SortBy = "breakout_score" | "relevance_score" | "velocity_score";
 
 interface UseTrendsOptions {
   brandId: string | undefined;
   status?: TrendStatus[];
   category?: string;
+  formatType?: FormatType;
+  sortBy?: SortBy;
   limit?: number;
 }
 
-export function useTrends({ brandId, status, category, limit = 20 }: UseTrendsOptions) {
+export function useTrends({ brandId, status, category, formatType, sortBy = "breakout_score", limit = 20 }: UseTrendsOptions) {
   const [trends, setTrends] = useState<Trend[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +41,11 @@ export function useTrends({ brandId, status, category, limit = 20 }: UseTrendsOp
     if (category) {
       query = query.eq("category", category);
     }
+    if (formatType) {
+      query = query.eq("format_type", formatType);
+    }
 
-    query = query.order("breakout_score", { ascending: false }).limit(limit);
+    query = query.order(sortBy, { ascending: false }).limit(limit);
 
     const { data, error: fetchError } = await query;
 
@@ -48,7 +55,7 @@ export function useTrends({ brandId, status, category, limit = 20 }: UseTrendsOp
       setTrends(data || []);
     }
     setLoading(false);
-  }, [brandId, status, category, limit, supabase]);
+  }, [brandId, status, category, formatType, sortBy, limit, supabase]);
 
   useEffect(() => {
     fetchTrends();

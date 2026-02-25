@@ -1,5 +1,17 @@
-export type TrendType = 'hashtag_cluster' | 'music' | 'meme_format' | 'cultural_moment';
+export type TrendType = 'hashtag_cluster' | 'music' | 'meme_format' | 'cultural_moment' | 'caption_pattern';
 export type TrendStatus = 'emerging' | 'active' | 'peaking' | 'declining' | 'expired';
+
+export type FormatType =
+  | 'sound_trend'
+  | 'meme_template'
+  | 'challenge'
+  | 'tutorial_format'
+  | 'pov_format'
+  | 'grwm'
+  | 'transition_trend'
+  | 'storytime'
+  | 'before_after'
+  | 'other';
 
 export interface Trend {
   id: string;
@@ -9,8 +21,12 @@ export interface Trend {
   hashtag_cluster: string[];
   music_id: string | null;
   music_name: string | null;
+  music_author: string | null;
+  format_type: FormatType | null;
+  format_label: string | null;
   velocity_score: number;
   breakout_score: number;
+  relevance_score: number;
   category: string | null;
   content_count: number;
   total_views: number;

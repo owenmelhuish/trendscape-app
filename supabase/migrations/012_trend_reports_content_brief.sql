@@ -1,0 +1,10 @@
+ALTER TABLE trend_reports ADD COLUMN format_type TEXT;
+ALTER TABLE trend_reports ADD COLUMN format_label TEXT;
+ALTER TABLE trend_reports ADD COLUMN what_makes_it_replicable TEXT;
+ALTER TABLE trend_reports ADD COLUMN recreation_steps TEXT[] DEFAULT '{}';
+ALTER TABLE trend_reports ADD COLUMN required_sound JSONB;
+ALTER TABLE trend_reports ADD COLUMN recommended_hooks TEXT[] DEFAULT '{}';
+ALTER TABLE trend_reports ADD COLUMN caption_templates TEXT[] DEFAULT '{}';
+ALTER TABLE trend_reports ADD COLUMN brand_adaptation TEXT;
+ALTER TABLE trend_reports ADD COLUMN example_captions TEXT[] DEFAULT '{}';
+ALTER TABLE trend_reports ADD COLUMN estimated_difficulty TEXT;

@@ -7,7 +7,8 @@ import { BreakoutScoreRing } from "@/components/shared/breakout-score-ring";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { VelocityBadge } from "@/components/dashboard/velocity-badge";
 import { Badge } from "@/components/ui/badge";
-import { Hash, Music, Eye, Heart } from "lucide-react";
+import { Hash, Music, Eye, Heart, Target } from "lucide-react";
+import { FORMAT_TYPE_CONFIG } from "@/lib/constants";
 import type { Trend } from "@/types/trend";
 
 interface TrendCardProps {
@@ -17,6 +18,10 @@ interface TrendCardProps {
 export function TrendCard({ trend }: TrendCardProps) {
   const typeIcon = trend.type === "music" ? Music : Hash;
   const TypeIcon = typeIcon;
+
+  const formatConfig = trend.format_type
+    ? FORMAT_TYPE_CONFIG[trend.format_type]
+    : null;
 
   return (
     <motion.div variants={staggerItem}>
@@ -33,15 +38,37 @@ export function TrendCard({ trend }: TrendCardProps) {
                 </h3>
               </div>
 
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <StatusBadge status={trend.status} />
                 <VelocityBadge score={Number(trend.velocity_score)} />
-                {trend.category && (
+                {formatConfig && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-medium"
+                    style={{
+                      borderColor: formatConfig.color,
+                      color: formatConfig.color,
+                      backgroundColor: `${formatConfig.color}10`,
+                    }}
+                  >
+                    {formatConfig.label}
+                  </Badge>
+                )}
+                {Number(trend.relevance_score) > 0 && (
+                  <RelevanceBadge score={Number(trend.relevance_score)} />
+                )}
+                {!formatConfig && trend.category && (
                   <Badge variant="secondary" className="text-xs">
                     {trend.category}
                   </Badge>
                 )}
               </div>
+
+              {trend.format_label && (
+                <p className="text-xs text-muted-foreground mb-2 truncate">
+                  {trend.format_label}
+                </p>
+              )}
 
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -61,6 +88,30 @@ export function TrendCard({ trend }: TrendCardProps) {
         </div>
       </Link>
     </motion.div>
+  );
+}
+
+function RelevanceBadge({ score }: { score: number }) {
+  const getConfig = (s: number) => {
+    if (s >= 60) return { color: "#10B981", bg: "#ECFDF5" };
+    if (s >= 40) return { color: "#F59E0B", bg: "#FFFBEB" };
+    return { color: "#94A3B8", bg: "#F8FAFC" };
+  };
+  const config = getConfig(score);
+
+  return (
+    <Badge
+      variant="outline"
+      className="gap-1 font-medium text-xs"
+      style={{
+        borderColor: config.color,
+        color: config.color,
+        backgroundColor: config.bg,
+      }}
+    >
+      <Target className="w-3 h-3" />
+      {score}%
+    </Badge>
   );
 }
 

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { fetchRunResults, mapTikTokResult } from "@/lib/scraper/tiktok-actor";
+import { scoreItem } from "@/lib/engine/virality-scorer";
+import type { RawContent } from "@/types/content";
 
 export async function POST(request: Request) {
   try {
@@ -35,8 +37,12 @@ export async function POST(request: Request) {
     // Fetch results from Apify
     const results = await fetchRunResults(runId);
 
-    // Map and upsert content
-    const mappedContent = results.map((r) => mapTikTokResult(r, brandId, jobId));
+    // Map content and compute virality scores inline
+    const mappedContent = results.map((r) => {
+      const content = mapTikTokResult(r, brandId, jobId);
+      const scores = scoreItem(content as unknown as RawContent);
+      return { ...content, virality_score: scores.virality_score, engagement_rate: scores.engagement_rate };
+    });
 
     let itemsInserted = 0;
     // Batch upsert in chunks of 50

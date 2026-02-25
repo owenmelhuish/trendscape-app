@@ -1,22 +1,26 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
+
+type ScrapeStatus = "idle" | "scraping" | "processing" | "completed" | "failed";
 
 interface ScrapeState {
-  loading: boolean;
+  status: ScrapeStatus;
   jobId: string | null;
   error: string | null;
 }
 
 export function useScrape() {
   const [state, setState] = useState<ScrapeState>({
-    loading: false,
+    status: "idle",
     jobId: null,
     error: null,
   });
+  const abortRef = useRef(false);
 
   const triggerScrape = useCallback(async (brandId: string) => {
-    setState({ loading: true, jobId: null, error: null });
+    abortRef.current = false;
+    setState({ status: "scraping", jobId: null, error: null });
 
     try {
       const response = await fetch("/api/scrape/trigger", {
@@ -28,14 +32,45 @@ export function useScrape() {
       const data = await response.json();
 
       if (!response.ok) {
-        setState({ loading: false, jobId: null, error: data.error });
-      } else {
-        setState({ loading: false, jobId: data.jobId, error: null });
+        setState({ status: "failed", jobId: null, error: data.error });
+        return;
+      }
+
+      const { jobId } = data;
+      setState({ status: "scraping", jobId, error: null });
+
+      // Poll loop
+      while (!abortRef.current) {
+        const pollRes = await fetch("/api/scrape/poll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId, brandId }),
+        });
+
+        const pollData = await pollRes.json();
+
+        if (pollData.status === "completed") {
+          setState({ status: "completed", jobId, error: null });
+          return;
+        }
+
+        if (pollData.status === "failed") {
+          setState({ status: "failed", jobId, error: "Scrape run failed" });
+          return;
+        }
+
+        // Still running — wait a moment before polling again
+        setState((prev) => ({ ...prev, status: "processing" }));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     } catch (error) {
-      setState({ loading: false, jobId: null, error: String(error) });
+      setState({ status: "failed", jobId: null, error: String(error) });
     }
   }, []);
 
-  return { ...state, triggerScrape };
+  const cancel = useCallback(() => {
+    abortRef.current = true;
+  }, []);
+
+  return { ...state, triggerScrape, cancel };
 }

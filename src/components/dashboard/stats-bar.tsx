@@ -2,26 +2,28 @@
 
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/motion";
-import { TrendingUp, Zap, BarChart3, Music } from "lucide-react";
-import type { Trend } from "@/types/trend";
+import { Film, Zap, BarChart3, TrendingUp } from "lucide-react";
+import type { RawContent } from "@/types/content";
 
 interface StatsBarProps {
-  trends: Trend[];
+  content: RawContent[];
+  total: number;
 }
 
-export function StatsBar({ trends }: StatsBarProps) {
-  const activeTrends = trends.filter((t) => ["emerging", "active", "peaking"].includes(t.status)).length;
-  const avgBreakout = trends.length > 0
-    ? Math.round(trends.reduce((s, t) => s + Number(t.breakout_score), 0) / trends.length)
+export function StatsBar({ content, total }: StatsBarProps) {
+  const avgVirality = content.length > 0
+    ? Math.round(content.reduce((s, c) => s + (c.virality_score ?? 0), 0) / content.length)
     : 0;
-  const totalViews = trends.reduce((s, t) => s + Number(t.total_views), 0);
-  const musicTrends = trends.filter((t) => t.type === "music").length;
+  const highestViews = content.length > 0
+    ? Math.max(...content.map((c) => c.views))
+    : 0;
+  const over100k = content.filter((c) => c.views >= 100_000).length;
 
   const stats = [
-    { icon: TrendingUp, label: "Active Trends", value: activeTrends, color: "#14B8A6" },
-    { icon: Zap, label: "Avg Breakout", value: avgBreakout, color: "#F59E0B" },
-    { icon: BarChart3, label: "Total Views", value: formatViews(totalViews), color: "#3B82F6" },
-    { icon: Music, label: "Music Trends", value: musicTrends, color: "#8B5CF6" },
+    { icon: Film, label: "Total Videos", value: formatViews(total), color: "#14B8A6" },
+    { icon: Zap, label: "Avg Virality", value: avgVirality, color: "#F59E0B" },
+    { icon: BarChart3, label: "Highest Views", value: formatViews(highestViews), color: "#3B82F6" },
+    { icon: TrendingUp, label: "Videos 100K+", value: over100k, color: "#8B5CF6" },
   ];
 
   return (

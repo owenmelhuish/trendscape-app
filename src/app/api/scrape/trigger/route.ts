@@ -1,6 +1,27 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { startTikTokScrape } from "@/lib/scraper/tiktok-actor";
+import { INDUSTRY_TERMS } from "@/lib/constants";
+
+/**
+ * Merge brand keywords with top industry terms, avoiding duplicates.
+ * Returns at most brandKeywords + 6 industry terms.
+ */
+function buildSearchTerms(brandKeywords: string[], industry: string): string[] {
+  const brandLower = new Set(brandKeywords.map((k) => k.toLowerCase()));
+  const industryTerms = INDUSTRY_TERMS[industry] || [];
+
+  // Pick up to 6 industry terms that don't overlap with brand keywords
+  const extraTerms: string[] = [];
+  for (const term of industryTerms) {
+    if (extraTerms.length >= 6) break;
+    if (!brandLower.has(term.toLowerCase())) {
+      extraTerms.push(term);
+    }
+  }
+
+  return [...brandKeywords, ...extraTerms];
+}
 
 export async function POST(request: Request) {
   try {
@@ -26,6 +47,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Brand has no keywords configured" }, { status: 400 });
     }
 
+    // Merge brand keywords with industry terms for broader discovery
+    const searchTerms = buildSearchTerms(brand.keywords, brand.industry);
+
     // Create scrape job record
     const { data: job, error: jobError } = await supabase
       .from("scrape_jobs")
@@ -34,6 +58,7 @@ export async function POST(request: Request) {
         platform: "tiktok",
         status: "pending",
         keywords_used: brand.keywords,
+        search_terms: searchTerms,
       })
       .select()
       .single();
@@ -42,14 +67,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to create scrape job" }, { status: 500 });
     }
 
-    // Build webhook URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-    const webhookUrl = `${baseUrl}/api/scrape/webhook?jobId=${job.id}&brandId=${brandId}`;
+    // Build webhook URL (only for deployed environments)
+    let webhookUrl: string | undefined;
+    if (process.env.VERCEL_URL) {
+      const baseUrl = `https://${process.env.VERCEL_URL}`;
+      webhookUrl = `${baseUrl}/api/scrape/webhook?jobId=${job.id}&brandId=${brandId}`;
+    }
 
-    // Start Apify run
-    const { runId } = await startTikTokScrape(brand.keywords, webhookUrl);
+    // Start Apify run with broader search terms
+    const { runId } = await startTikTokScrape(searchTerms, webhookUrl);
 
     // Update job with run ID and status
     await supabase
@@ -57,11 +83,11 @@ export async function POST(request: Request) {
       .update({ apify_run_id: runId, status: "running" })
       .eq("id", job.id);
 
-    return NextResponse.json({ jobId: job.id, runId });
+    return NextResponse.json({ jobId: job.id, runId, searchTerms });
   } catch (error) {
     console.error("Scrape trigger error:", error);
     return NextResponse.json(
-      { error: "Failed to trigger scrape" },
+      { error: "Failed to trigger scrape", detail: String(error) },
       { status: 500 }
     );
   }
