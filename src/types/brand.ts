@@ -6,6 +6,7 @@ export interface Brand {
   keywords: string[];
   logo_url: string | null;
   primary_color: string | null;
+  website_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

@@ -23,7 +23,7 @@ export function BrandOnboarding({ onComplete }: BrandOnboardingProps) {
   const [industry, setIndustry] = useState<string>(INDUSTRIES[0]);
   const [keywordInput, setKeywordInput] = useState("");
   const [keywords, setKeywords] = useState<string[]>([]);
-  const [primaryColor, setPrimaryColor] = useState("#14B8A6");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const addKeyword = useCallback(() => {
@@ -59,7 +59,7 @@ export function BrandOnboarding({ onComplete }: BrandOnboardingProps) {
           name: name.trim(),
           industry,
           keywords,
-          primary_color: primaryColor,
+          website_url: websiteUrl.trim() || null,
           userId: user.id,
         }),
       });
@@ -89,9 +89,9 @@ export function BrandOnboarding({ onComplete }: BrandOnboardingProps) {
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4">
           <Sparkles className="w-7 h-7 text-white" />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight">Create Your Brand</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Tell Us About Your Brand</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          Set up your brand to start discovering trends in your industry.
+          Help our AI understand your brand so it can find the most relevant trends.
         </p>
       </motion.div>
 
@@ -105,6 +105,18 @@ export function BrandOnboarding({ onComplete }: BrandOnboardingProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Acme Corp"
+            />
+          </div>
+
+          {/* Website URL */}
+          <div className="space-y-2">
+            <Label htmlFor="website-url">Website URL</Label>
+            <Input
+              id="website-url"
+              type="url"
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="https://example.com"
             />
           </div>
 
@@ -170,21 +182,6 @@ export function BrandOnboarding({ onComplete }: BrandOnboardingProps) {
             {keywords.length === 0 && (
               <p className="text-xs text-destructive">At least 1 keyword is required</p>
             )}
-          </div>
-
-          {/* Brand Color */}
-          <div className="space-y-2">
-            <Label htmlFor="brand-color">Brand Color (optional)</Label>
-            <div className="flex items-center gap-3">
-              <input
-                id="brand-color"
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="w-9 h-9 rounded-md border border-input cursor-pointer"
-              />
-              <span className="text-sm text-muted-foreground">{primaryColor}</span>
-            </div>
           </div>
 
           {/* Submit */}

@@ -42,6 +42,7 @@ export async function POST(request: Request) {
         industry: body.industry,
         keywords: body.keywords || [],
         primary_color: body.primary_color || "#14B8A6",
+        website_url: body.website_url || null,
       })
       .select()
       .single();
