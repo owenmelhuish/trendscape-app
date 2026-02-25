@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { AuthProvider } from "@/components/auth/auth-provider";
+import { AuthProvider, useAuth } from "@/components/auth/auth-provider";
 import { Header } from "@/components/layout/header";
 import { SectionHeader } from "@/components/shared/section-header";
 import { GlassCard } from "@/components/layout/glass-card";
@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import type { Brand } from "@/types/brand";
 
 function AdminContent() {
+  const { user } = useAuth();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -33,20 +34,30 @@ function AdminContent() {
   useEffect(() => { fetchBrands(); }, []);
 
   const handleCreate = async () => {
-    const { error } = await supabase.from("brands").insert({
-      name: newBrand.name,
-      slug: newBrand.slug || newBrand.name.toLowerCase().replace(/\s+/g, "-"),
-      industry: newBrand.industry,
-      keywords: newBrand.keywords.split(",").map((k) => k.trim()).filter(Boolean),
-    });
+    try {
+      const res = await fetch("/api/brands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newBrand.name,
+          slug: newBrand.slug || undefined,
+          industry: newBrand.industry,
+          keywords: newBrand.keywords.split(",").map((k) => k.trim()).filter(Boolean),
+          userId: user?.id,
+        }),
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error || "Failed to create brand");
+      }
+
       toast.success("Brand created");
       setDialogOpen(false);
       setNewBrand({ name: "", slug: "", industry: INDUSTRIES[0] as string, keywords: "" });
       fetchBrands();
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 

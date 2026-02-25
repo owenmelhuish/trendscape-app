@@ -6,10 +6,9 @@ import { BrandSelector } from "@/components/layout/brand-selector";
 import { SectionHeader } from "@/components/shared/section-header";
 import { StatsBar } from "@/components/dashboard/stats-bar";
 import { TrendFeed } from "@/components/dashboard/trend-feed";
-import { EmptyState } from "@/components/shared/empty-state";
+import { BrandOnboarding } from "@/components/onboarding/brand-onboarding";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2 } from "lucide-react";
 import { useState } from "react";
 import { TREND_CATEGORIES } from "@/lib/constants";
 import type { TrendStatus } from "@/types/trend";
@@ -23,7 +22,7 @@ const STATUS_FILTERS: { label: string; value: TrendStatus[] }[] = [
 ];
 
 export default function DashboardPage() {
-  const { activeBrand, loading: brandLoading } = useBrand();
+  const { activeBrand, loading: brandLoading, refetch } = useBrand();
   const [statusFilter, setStatusFilter] = useState<TrendStatus[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
 
@@ -42,13 +41,7 @@ export default function DashboardPage() {
   }
 
   if (!activeBrand) {
-    return (
-      <EmptyState
-        icon={Building2}
-        title="No brand selected"
-        description="You need to be added to a brand to view trends. Contact your admin."
-      />
-    );
+    return <BrandOnboarding onComplete={refetch} />;
   }
 
   return (

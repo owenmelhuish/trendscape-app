@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 import { useBrand } from "@/hooks/use-brand";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Building2 } from "lucide-react";
+import { ChevronDown, Building2, Plus } from "lucide-react";
+import Link from "next/link";
 
 export function BrandSelector() {
   const { brands, activeBrand, setActiveBrand, loading } = useBrand();
@@ -17,7 +18,12 @@ export function BrandSelector() {
 
   if (!brands.length) {
     return (
-      <div className="text-sm text-muted-foreground">No brands configured</div>
+      <Button variant="outline" size="sm" className="gap-1.5" asChild>
+        <Link href="/dashboard">
+          <Plus className="w-3.5 h-3.5" />
+          Create your first brand
+        </Link>
+      </Button>
     );
   }
 
